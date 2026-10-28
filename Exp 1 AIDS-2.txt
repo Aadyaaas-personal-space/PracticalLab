@@ -1,0 +1,50 @@
+# Step 1: Install required library (Run this first if pgmpy is not installed)
+!pip install pgmpy networkx matplotlib
+
+# Step 2: Import necessary libraries
+from pgmpy.models import DiscreteBayesianNetwork
+from pgmpy.factors.discrete import TabularCPD
+from pgmpy.inference import VariableElimination
+import networkx as nx
+import pylab as plt
+
+# Step 3: Define the Bayesian Network Structure (Monty Hall Problem example)
+model = DiscreteBayesianNetwork([('Guest', 'Host'), ('Price', 'Host')])
+
+# Step 4: Define Conditional Probability Distributions (CPDs)
+# Prior probabilities for Guest and Price
+cpd_guest = TabularCPD('Guest', 3, [[0.33], [0.33], [0.33]])
+cpd_price = TabularCPD('Price', 3, [[0.33], [0.33], [0.33]])
+
+# Conditional probability for Host given Guest and Price
+cpd_host = TabularCPD(
+    'Host', 3, 
+    [[0,   0,   0,   0,   0.5, 1,   0,   1,   0.5],
+     [0.5, 0,   1,   0,   0,   0,   1,   0,   0.5],
+     [0.5, 1,   0,   1,   0.5, 0,   0,   0,   0]],
+    evidence=['Guest', 'Price'], 
+    evidence_card=[3, 3]
+)
+
+# Step 5: Add CPDs to the model and validate
+model.add_cpds(cpd_guest, cpd_price, cpd_host)
+print("Model check valid:", model.check_model())
+
+# Step 6: Inspect model components
+print(type(model))
+print("Nodes:", list(model.nodes()))
+print("Edges:", list(model.edges()))
+
+# Step 7: Perform Probabilistic Inference (Variable Elimination)
+infer = VariableElimination(model)
+posterior_p = infer.query(['Host'], evidence={'Guest': 2, 'Price': 2})
+print("\nPosterior Probability:")
+print(posterior_p)
+
+# Step 8: Visualize the Bayesian Network Graph
+G = nx.DiGraph()
+G.add_edges_from(model.edges())
+plt.figure(figsize=(6, 4))
+nx.draw(G, with_labels=True, node_size=2500, node_color='lightblue', font_size=12, font_weight='bold', arrows=True)
+plt.title("Bayesian Network Structure")
+plt.show()

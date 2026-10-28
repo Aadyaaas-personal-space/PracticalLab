@@ -1,0 +1,72 @@
+# Step 1: Import required libraries
+import nltk
+import random
+import string
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.metrics.pairwise import cosine_similarity
+
+# Download necessary NLTK data (run once)
+nltk.download('punkt')
+nltk.download('wordnet')
+nltk.download('punkt_tab')
+
+# Step 2: Healthcare knowledge base sentences
+sentences = [
+    'Fever is a common symptom of viral infections.',
+    'Drink plenty of fluids and stay hydrated when you have a fever.',
+    'Persistent cough can be a sign of bronchitis or asthma.',
+    'Rest is essential for your body to recover from illnesses.',
+    'Headaches can be caused by stress, dehydration, or lack of sleep.',
+    'Consult a doctor if your symptoms persist for more than a few days.',
+    'Eating a balanced diet helps boost your immune system.'
+]
+
+# Step 3: Text preprocessing and lemmatization setup
+lemmer = nltk.stem.WordNetLemmatizer()
+
+def LemTokens(tokens):
+    return [lemmer.lemmatize(token) for token in tokens]
+
+remove_punct_dict = dict((ord(punct), None) for punct in string.punctuation)
+
+def LemNormalize(text):
+    return LemTokens(nltk.word_tokenize(text.lower().translate(remove_punct_dict)))
+
+# Step 4: Chatbot Response Logic using TF-IDF and Cosine Similarity
+def response(user_input):
+    robo_response = ''
+    sentence_list = sentences.copy()
+    sentence_list.append(user_input)
+    
+    # Vectorize sentences
+    TfidfVec = TfidfVectorizer(tokenizer=LemNormalize, stop_words='english')
+    tfidf = TfidfVec.fit_transform(sentence_list)
+    
+    # Calculate cosine similarity between user input and knowledge base
+    vals = cosine_similarity(tfidf[-1], tfidf)
+    idx = vals.argsort()[0][-2]
+    flat = vals.flatten()
+    flat.sort()
+    req_tfidf = flat[-2]
+    
+    # Return response if similarity is found, else ask for clarification
+    if req_tfidf == 0:
+        robo_response = "I am sorry! I don't understand you. Please consult a medical professional for accurate advice."
+        return robo_response
+    else:
+        robo_response = sentence_list[idx]
+        return robo_response
+
+# Step 5: Test the chatbot system
+print("Healthcare Chatbot: Hello! I am your healthcare assistant. Ask me a health-related question or type 'bye' to exit.")
+while True:
+    user_input = input("You: ")
+    user_input = user_input.lower()
+    if user_input != 'bye':
+        if user_input in ['hi', 'hello', 'hey']:
+            print("Chatbot: Hello! How can I help you with your health queries today?")
+        else:
+            print("Chatbot:", response(user_input))
+    else:
+        print("Chatbot: Take care! Goodbye.")
+        break

@@ -1,0 +1,26 @@
+# Step 1: Import the NumPy library for numerical and array operations
+import numpy as np
+
+# Step 2: Define fuzzy sets A and B (membership values between 0 and 1)
+A = np.array([0.5, 0.7, 0.0])
+B = np.array([0.8, 0.2, 1.0])
+
+# Step 3: Fuzzy Union (maximum membership value from both sets)
+union = np.maximum(A, B)
+
+# Step 4: Fuzzy Intersection (minimum membership value from both sets)
+intersection = np.minimum(A, B)
+
+# Step 5: Fuzzy Complement of A (1 - A)
+complement_A = 1 - A
+
+# Step 6: Fuzzy Difference (A - B = A intersect complement of B)
+difference = np.minimum(A, 1 - B)
+
+# Step 7: Display results
+print("Fuzzy Set A:", A)
+print("Fuzzy Set B:", B)
+print("\nUnion:", union)
+print("Intersection:", intersection)
+print("Complement of A:", complement_A)
+print("Difference A-B:", difference)

@@ -1,0 +1,77 @@
+# Step 1: Import libraries
+import pandas as pd
+import seaborn as sns
+import matplotlib.pyplot as plt
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, confusion_matrix, roc_auc_score
+from sklearn.linear_model import LogisticRegression
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.svm import SVC
+from sklearn.datasets import load_iris
+
+# Step 2: Load dataset (Iris dataset)
+iris = load_iris()
+X = iris.data
+y = iris.target
+
+# Convert to DataFrame for clarity
+df = pd.DataFrame(X, columns=iris.feature_names)
+df['target'] = y
+print("Dataset preview:\n", df.head())
+
+# Step 3: Split dataset (70% training, 30% testing)
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)
+
+# Step 4: Define classifiers
+models = {
+    "Logistic Regression": LogisticRegression(max_iter=200),
+    "Decision Tree": DecisionTreeClassifier(),
+    "Random Forest": RandomForestClassifier(),
+    "SVM": SVC(probability=True)
+}
+
+# Step 5: Train and evaluate models
+results = []
+for name, model in models.items():
+    # Train the model
+    model.fit(X_train, y_train)
+    
+    # Predictions
+    y_pred = model.predict(X_test)
+    
+    # Probabilities (needed for ROC-AUC)
+    if hasattr(model, "predict_proba"):
+        y_prob = model.predict_proba(X_test)
+        roc_auc = roc_auc_score(y_test, y_prob, multi_class="ovr")
+    else:
+        roc_auc = "N/A"
+        
+    # Collect metrics
+    results.append({
+        "Model": name,
+        "Accuracy": accuracy_score(y_test, y_pred),
+        "Precision": precision_score(y_test, y_pred, average="weighted"),
+        "Recall": recall_score(y_test, y_pred, average="weighted"),
+        "F1-Score": f1_score(y_test, y_pred, average="weighted"),
+        "ROC-AUC": roc_auc
+    })
+
+# Step 6: Display evaluation results in a table
+df_results = pd.DataFrame(results)
+print("\nEvaluation Results:\n")
+print(df_results)
+
+# Step 7: Confusion Matrix Heatmap for each model
+for name, model in models.items():
+    y_pred = model.predict(X_test)
+    cm = confusion_matrix(y_test, y_pred)
+    
+    plt.figure(figsize=(5, 4))
+    sns.heatmap(cm, annot=True, fmt="d", cmap="Blues",
+                xticklabels=iris.target_names,
+                yticklabels=iris.target_names)
+    plt.title(f"Confusion Matrix - {name}")
+    plt.xlabel("Predicted")
+    plt.ylabel("Actual")
+    plt.show()
